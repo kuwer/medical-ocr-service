@@ -38,7 +38,7 @@ Docker smoke test, saved response, and production considerations, see
 **Requirements:** Node.js 18+, a [Datalab](https://www.datalab.to/auth/sign_up) account (free tier is sufficient) and API key from [datalab.to/settings](https://www.datalab.to/settings).
 
 ```bash
-git clone <this-repo>
+git clone https://github.com/kuwer/medical-ocr-service.git
 cd medical-ocr-service
 npm install
 cp .env.example .env
@@ -132,9 +132,8 @@ curl -sS -X POST http://localhost:3000/extract \
 ```
 
 The response contains a FHIR `Bundle` with 14 `Observation` resources and an
-empty `meta.needsReview` list. Screenshots are optional; the saved JSON and
-reproducible command provide the evaluation evidence without exposing bearer
-tokens or Datalab API keys.
+empty `meta.needsReview` list. The saved JSON and reproducible command provide
+the evaluation evidence without exposing bearer tokens or Datalab API keys.
 
 ## Environment Variables
 
