@@ -48,6 +48,7 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opa
 .privacy-note span { color: var(--green); margin-right: 5px; }
 .results-panel { position: relative; background: #fff; }
 .empty-state { min-height: 450px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 30px; }
+.empty-state[hidden], .results-content[hidden] { display: none; }
 .empty-symbol { color: #9bb4a1; font-size: 58px; line-height: 1; margin-bottom: 20px; transform: rotate(-12deg); }
 .empty-state h2 { font-family: Manrope, sans-serif; font-size: 20px; margin: 0 0 10px; }
 .empty-state p { max-width: 270px; color: var(--muted); font-size: 13px; line-height: 1.6; margin: 0; }
