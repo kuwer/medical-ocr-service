@@ -1,0 +1,15 @@
+services:
+  - type: web
+    name: medical-ocr-service
+    runtime: docker
+    plan: free
+    healthCheckPath: /health
+    envVars:
+      - key: AUTH_TOKEN
+        sync: false
+      - key: DATALAB_API_KEY
+        sync: false
+      - key: MARKER_MODE
+        value: balanced
+      - key: MARKER_POLL_TIMEOUT_SECONDS
+        value: "120"

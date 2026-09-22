@@ -16,6 +16,14 @@ describe('HTTP API', () => {
     mockedExtractMarkdown.mockReset();
   });
 
+  it('serves the browser workspace at the root route', async () => {
+    const response = await request(app).get('/');
+
+    expect(response.status).toBe(200);
+    expect(response.type).toBe('text/html');
+    expect(response.text).toContain('LabLens');
+  });
+
   it('serves public health status', async () => {
     const response = await request(app).get('/health');
 

@@ -48,6 +48,25 @@ npm run dev
 
 The service listens on `http://localhost:3000` (or whatever `PORT` you set).
 
+### Try the web app online for free
+
+The repository includes a small browser workspace at `/` for uploading reports,
+reviewing extracted observations, and inspecting the FHIR bundle. The backend
+and frontend are shipped in the same Docker service, so there is no CORS setup
+or separate frontend deployment to maintain.
+
+To deploy the service on Render's free plan:
+
+1. Create a new **Blueprint** in Render and connect the GitHub repository.
+2. Render will detect [`render.yaml`](render.yaml) and create the web service.
+3. Set `AUTH_TOKEN` to a newly generated value and `DATALAB_API_KEY` to your
+  Datalab key when prompted. Never paste either value into GitHub.
+4. Open the generated Render URL and use the web upload workspace.
+
+The free service may sleep when idle, so the first request after a quiet period
+can take a little longer. Render's free plan is suitable for testing, not for
+handling production healthcare traffic or sensitive patient data.
+
 ### Configure AUTH_TOKEN
 
 Each user or installation should generate its own token. From the project
