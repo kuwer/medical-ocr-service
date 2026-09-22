@@ -20,4 +20,28 @@ describe('parseReport', () => {
       },
     ]);
   });
+
+  it('skips patient tables and parses five-column tables with flagged values', () => {
+    const markdown = [
+      '| Patient Information | | Sample Information |',
+      '| --- | --- | --- |',
+      '| Name | : Lyubochka Svetka | Lab Id |',
+      '| Sex/Age | : Male / 41 Y | Sample Type |',
+      '## Complete Blood Count',
+      '| | | | |',
+      '| --- | --- | --- | --- | --- |',
+      '| WBC Count | SF Cube cell analysis | <b>H 10570</b> | /cmm | 4000 - 10000 |',
+    ].join('\n');
+
+    expect(parseReport(markdown)).toEqual([
+      {
+        testName: 'WBC Count',
+        rawValue: 'H 10570',
+        value: 10570,
+        unit: '/cmm',
+        refLow: 4000,
+        refHigh: 10000,
+      },
+    ]);
+  });
 });

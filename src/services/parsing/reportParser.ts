@@ -48,6 +48,15 @@ function extractFromMarkdownTables(markdown: string): ParsedObservation[] {
       i++; // skip the |---|---| separator row
     }
 
+    // Patient/sample information is also rendered as a markdown table, but
+    // it is not a set of observations.
+    if (isMetadataTable(headerCells)) {
+      while (i < lines.length && isTableRow(lines[i])) {
+        i++;
+      }
+      continue;
+    }
+
     while (i < lines.length && isTableRow(lines[i])) {
       const cells = splitRow(lines[i]);
       const parsed = rowToObservation(cells, columnIndex);
@@ -93,23 +102,37 @@ function mapColumns(headerCells: string[]): {
   };
 }
 
+function isMetadataTable(headerCells: string[]): boolean {
+  const header = headerCells.join(' ').toLowerCase();
+  return ['patient information', 'sample information', 'client/location information'].some(
+    (label) => header.includes(label)
+  );
+}
+
 function rowToObservation(
   cells: string[],
   columnIndex: { test: number; result: number; unit: number; range: number }
 ): ParsedObservation | null {
   // Fall back to positional guess (name, value, unit, range) when the
   // header didn't clearly label columns.
+  const hasMappedColumns = Object.values(columnIndex).some((index) => index >= 0);
   const testIdx = columnIndex.test >= 0 ? columnIndex.test : 0;
-  const resultIdx = columnIndex.result >= 0 ? columnIndex.result : 1;
-  const unitIdx = columnIndex.unit >= 0 ? columnIndex.unit : 2;
-  const rangeIdx = columnIndex.range >= 0 ? columnIndex.range : 3;
+  const resultIdx = columnIndex.result >= 0 ? columnIndex.result : cells.length >= 5 ? 2 : 1;
+  const unitIdx = columnIndex.unit >= 0 ? columnIndex.unit : cells.length >= 5 ? 3 : 2;
+  const rangeIdx = columnIndex.range >= 0 ? columnIndex.range : cells.length >= 5 ? 4 : 3;
 
   const testName = cleanTestName(cells[testIdx]?.trim() || '');
   const rawResult = cells[resultIdx]?.trim();
   let unit = unitIdx < cells.length ? cells[unitIdx]?.trim() : '';
   const rangeText = rangeIdx < cells.length ? cells[rangeIdx]?.trim() : '';
 
-  if (!testName || !rawResult || isHeaderLike(testName) || isReportMetadataRow(testName)) {
+  if (
+    !testName ||
+    !rawResult ||
+    isHeaderLike(testName) ||
+    isReportMetadataRow(testName) ||
+    (!hasMappedColumns && testName === 'Differential Count')
+  ) {
     return null;
   }
 
@@ -137,7 +160,9 @@ function isHeaderLike(text: string): boolean {
 }
 
 function isReportMetadataRow(text: string): boolean {
-  return /^primary sample type\s*:?$/i.test(text);
+  return /^(primary sample type|name|sex\/age|ref\. id|ref\. by|interpretation|unknown)\s*:?(?:\s|$)/i.test(text)
+    || /^-+$/.test(text)
+    || text.startsWith('-');
 }
 
 function cleanTestName(text: string): string {
@@ -180,14 +205,15 @@ function extractFromPlainText(markdown: string): ParsedObservation[] {
 // ---------- Shared value/unit/range parsing helpers ----------
 
 function parseValueAndUnit(token: string): { value: number | null; rawValue: string; unit: string | null } {
-  const rawValue = token.trim();
+  const rawValue = token.replace(/<[^>]+>/g, '').trim();
+  const numericToken = rawValue.replace(/^[HLN]\s+/i, '');
   // Leading numeric portion, e.g. "11.2" out of "11.2*" or "11.2 g/dL".
-  const numMatch = /^-?\d+(\.\d+)?/.exec(rawValue);
+  const numMatch = /^-?\d+(\.\d+)?/.exec(numericToken);
   const value = numMatch ? parseFloat(numMatch[0]) : null;
 
   // Anything alphabetic left after stripping the number/whitespace is
   // treated as an inline unit (e.g. "7800/cumm" -> unit "/cumm").
-  const remainder = rawValue.replace(numMatch?.[0] || '', '').trim();
+  const remainder = numericToken.replace(numMatch?.[0] || '', '').trim();
   const unit = /[A-Za-z/%µμ]/.test(remainder) ? remainder : null;
 
   return { value, rawValue, unit };
