@@ -46,7 +46,9 @@ cp .env.example .env
 npm run dev
 ```
 
-The service listens on `http://localhost:3000` (or whatever `PORT` you set).
+The service listens on `http://localhost:3000` (or whatever `PORT` you set). The
+browser workspace at `/` does not require an API token; it uses the server-side
+configuration. Direct API clients must still send `AUTH_TOKEN`.
 
 ### Try the web app online for free
 
@@ -163,6 +165,7 @@ the evaluation evidence without exposing bearer tokens or Datalab API keys.
 | `DATALAB_API_KEY` | Yes | — | API key from datalab.to |
 | `MARKER_MODE` | No | `balanced` | Datalab Marker processing mode: `fast`, `balanced`, or `accurate` |
 | `MARKER_POLL_TIMEOUT_SECONDS` | No | `120` | Max seconds to poll Marker before returning a 500 |
+| `PUBLIC_WEB_APP` | No | `true` | Enables the tokenless browser demo route; set to `false` to disable it |
 
 ## Example Request
 

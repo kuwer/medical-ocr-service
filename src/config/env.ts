@@ -21,4 +21,5 @@ export const env = {
     process.env.MARKER_POLL_TIMEOUT_SECONDS || '120',
     10
   ),
+  publicWebApp: process.env.PUBLIC_WEB_APP !== 'false',
 };

@@ -13,3 +13,5 @@ services:
         value: balanced
       - key: MARKER_POLL_TIMEOUT_SECONDS
         value: "120"
+      - key: PUBLIC_WEB_APP
+        value: "true"

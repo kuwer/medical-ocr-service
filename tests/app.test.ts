@@ -38,6 +38,24 @@ describe('HTTP API', () => {
     expect(response.body.error).toMatch(/Authorization header/);
   });
 
+  it('accepts browser uploads without exposing the API token', async () => {
+    mockedExtractMarkdown.mockResolvedValue([
+      '| Test | Result | Unit | Reference Range |',
+      '| --- | --- | --- | --- |',
+      '| Hemoglobin | 13.2 | g/dL | 12 - 16 |',
+    ].join('\n'));
+
+    const response = await request(app)
+      .post('/web/extract')
+      .attach('file', Buffer.from('synthetic report'), {
+        filename: 'report.pdf',
+        contentType: 'application/pdf',
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.entry[0].resource.code.text).toBe('Hemoglobin');
+  });
+
   it('rejects extraction requests without a file', async () => {
     const response = await request(app)
       .post('/extract')

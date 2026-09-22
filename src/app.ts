@@ -4,6 +4,8 @@ import { requireAuth } from './middleware/auth';
 import { errorHandler } from './middleware/errorHandler';
 import extractRoute from './routes/extract';
 import healthRoute from './routes/health';
+import webExtractRoute from './routes/webExtract';
+import { env } from './config/env';
 
 export function createApp(): Express {
   const app = express();
@@ -13,6 +15,10 @@ export function createApp(): Express {
   app.use(healthRoute);
 
   app.use(express.static(path.join(__dirname, '../public')));
+
+  if (env.publicWebApp) {
+    app.use(webExtractRoute);
+  }
 
   app.use(requireAuth);
   app.use(extractRoute);

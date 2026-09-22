@@ -3,7 +3,6 @@ const fileInput = document.querySelector('#file-input');
 const dropzone = document.querySelector('#dropzone');
 const fileTitle = document.querySelector('#file-title');
 const fileMeta = document.querySelector('#file-meta');
-const tokenInput = document.querySelector('#auth-token');
 const submitButton = document.querySelector('#submit-button');
 const emptyState = document.querySelector('#empty-state');
 const resultsContent = document.querySelector('#results-content');
@@ -14,9 +13,6 @@ const jsonDialog = document.querySelector('#json-dialog');
 const jsonOutput = document.querySelector('#json-output');
 const toast = document.querySelector('#toast');
 let latestBundle = null;
-
-const savedToken = window.localStorage.getItem('lab-lens-token');
-if (savedToken) tokenInput.value = savedToken;
 
 function showToast(message) {
   toast.textContent = message;
@@ -72,15 +68,12 @@ function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (char) => 
 form.addEventListener('submit', async (event) => {
   event.preventDefault();
   const file = fileInput.files[0];
-  const token = tokenInput.value.trim();
   if (!file) return showToast('Choose a report before extracting.');
-  if (!token) return showToast('Enter your access token to continue.');
-  window.localStorage.setItem('lab-lens-token', token);
   submitButton.disabled = true;
   submitButton.querySelector('span').textContent = 'Reading report...';
   try {
     const data = new FormData(); data.append('file', file);
-    const response = await fetch('/extract', { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: data });
+    const response = await fetch('/web/extract', { method: 'POST', body: data });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || 'Extraction failed.');
     renderResults(payload);
