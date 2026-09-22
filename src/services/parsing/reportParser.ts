@@ -122,7 +122,7 @@ function rowToObservation(
   const rangeIdx = columnIndex.range >= 0 ? columnIndex.range : cells.length >= 5 ? 4 : 3;
 
   const testName = cleanTestName(cells[testIdx]?.trim() || '');
-  const rawResult = cells[resultIdx]?.trim();
+  let rawResult = cells[resultIdx]?.trim();
   let unit = unitIdx < cells.length ? cells[unitIdx]?.trim() : '';
   const rangeText = rangeIdx < cells.length ? cells[rangeIdx]?.trim() : '';
 
@@ -136,13 +136,47 @@ function rowToObservation(
     return null;
   }
 
+  // Marker can shift columns when a report contains a method or sample cell.
+  // Recover a numeric result only from a non-range cell; never treat a
+  // reference interval as the measured value.
+  if (parseValueAndUnit(rawResult).value === null) {
+    const fallback = cells.find((cell, index) => {
+      if (index === testIdx || index === rangeIdx) return false;
+      const text = cell.trim();
+      return parseRange(text).low === null && parseValueAndUnit(text).value !== null;
+    });
+    if (fallback) rawResult = fallback.trim();
+  }
+
   // Some reports combine value + unit in one cell, e.g. "11.2 g/dL".
   const { value, rawValue, unit: inlineUnit } = parseValueAndUnit(rawResult);
   if (!unit && inlineUnit) {
     unit = inlineUnit;
   }
 
-  const { low, high } = parseRange(rangeText);
+  let { low, high } = parseRange(rangeText);
+  if (unit) {
+    const rangeWithUnit = parseRangeAndUnit(unit);
+    if (rangeWithUnit) {
+      if (low === null) low = rangeWithUnit.low;
+      if (high === null) high = rangeWithUnit.high;
+      unit = rangeWithUnit.unit;
+    } else if (parseRange(unit).low !== null) {
+      const nextCell = cells[rangeIdx + 1]?.trim();
+      const nextCellRange = parseRange(nextCell || '');
+      ({ low, high } = parseRange(unit));
+      unit = nextCell && nextCellRange.low === null ? nextCell : '';
+    }
+  }
+
+  if (!unit) {
+    const unitCell = cells.find((cell, index) => {
+      const text = cell.trim();
+      return index !== testIdx && index !== resultIdx && parseRange(text).low === null
+        && text.length <= 32 && !text.includes(':') && /[A-Za-z%µμ/]/.test(text);
+    });
+    unit = unitCell?.trim() || '';
+  }
 
   return {
     testName,
@@ -160,7 +194,7 @@ function isHeaderLike(text: string): boolean {
 }
 
 function isReportMetadataRow(text: string): boolean {
-  return /^(primary sample type|name|sex\/age|ref\. id|ref\. by|interpretation|unknown)\s*:?(?:\s|$)/i.test(text)
+  return /^(primary sample type|name|age|sex|sex\/age|p\. id(?: no\.?)?|accession no|referring doctor|referred by|referring by|ref\. id|ref\. by|interpretation|unknown)\s*:?(?:\s|$)/i.test(text)
     || /^-+$/.test(text)
     || text.startsWith('-');
 }
@@ -169,6 +203,7 @@ function cleanTestName(text: string): string {
   return text
     .replace(/<br\s*\/?>/gi, ' ')
     .replace(/<[^>]+>/g, '')
+    .replace(/\s+(?:Sample|Method)\s*:.*/i, '')
     .replace(/\s+/g, ' ')
     .trim();
 }
@@ -224,4 +259,10 @@ function parseRange(text: string): { low: number | null; high: number | null } {
   const match = /(-?\d+(?:\.\d+)?)\s*(?:-|–|to)\s*(-?\d+(?:\.\d+)?)/.exec(text);
   if (!match) return { low: null, high: null };
   return { low: parseFloat(match[1]), high: parseFloat(match[2]) };
+}
+
+function parseRangeAndUnit(text: string): { low: number; high: number; unit: string } | null {
+  const match = /^\s*(-?\d+(?:\.\d+)?)\s*(?:-|–|to)\s*(-?\d+(?:\.\d+)?)(?:\s+(.+))?\s*$/i.exec(text);
+  if (!match || !match[3]) return null;
+  return { low: parseFloat(match[1]), high: parseFloat(match[2]), unit: match[3].trim() };
 }

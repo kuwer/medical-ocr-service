@@ -44,4 +44,51 @@ describe('parseReport', () => {
       },
     ]);
   });
+
+  it('normalizes Pathkind rows with merged sample details and range units', () => {
+    const markdown = [
+      '| Test Name | Result | Biological Ref. Interval Unit |',
+      '| --- | --- | --- |',
+      '| Age | 35 Yrs | |',
+      '| Haemoglobin (Hb)<br>Sample: Whole Blood EDTA<br>Method: Photometric measurement | 12.6 | 12.0 - 15.0 gm/dL |',
+      '| TSH 3rd Generation<br>Sample: Serum<br>Method: ECLIA | 5.600 H | 0.270 - 4.200 µIU/mL |',
+      '| MCH | 28.2 | 27.0 - 32.0 | pg |',
+      '| MCHC | 32.5 | 31.5 - 34.5 |',
+    ].join('\n');
+
+    expect(parseReport(markdown)).toEqual([
+      {
+        testName: 'Haemoglobin (Hb)',
+        rawValue: '12.6',
+        value: 12.6,
+        unit: 'gm/dL',
+        refLow: 12,
+        refHigh: 15,
+      },
+      {
+        testName: 'TSH 3rd Generation',
+        rawValue: '5.600 H',
+        value: 5.6,
+        unit: 'µIU/mL',
+        refLow: 0.27,
+        refHigh: 4.2,
+      },
+      {
+        testName: 'MCH',
+        rawValue: '28.2',
+        value: 28.2,
+        unit: 'pg',
+        refLow: 27,
+        refHigh: 32,
+      },
+      {
+        testName: 'MCHC',
+        rawValue: '32.5',
+        value: 32.5,
+        unit: null,
+        refLow: 31.5,
+        refHigh: 34.5,
+      },
+    ]);
+  });
 });
