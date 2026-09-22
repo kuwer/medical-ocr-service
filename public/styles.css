@@ -18,7 +18,7 @@ body::before { content: ''; position: fixed; inset: 0; pointer-events: none; opa
 .brand-mark { display: grid; place-items: center; width: 28px; height: 28px; border-radius: 9px; background: var(--green); color: white; font-size: 24px; line-height: 1; }
 .service-status { color: var(--muted); font-size: 12px; display: flex; align-items: center; gap: 8px; }
 .status-dot { width: 7px; height: 7px; border-radius: 50%; background: #55a971; box-shadow: 0 0 0 4px #d8ead8; }
-.intro { padding: 78px 0 48px; max-width: 700px; }
+.intro { padding: 42px 0 48px; max-width: 700px; }
 .eyebrow, .step { color: var(--green); text-transform: uppercase; letter-spacing: .13em; font-size: 11px; font-weight: 700; }
 .intro h1 { font-family: Manrope, sans-serif; font-size: clamp(40px, 6vw, 72px); line-height: 1.01; letter-spacing: -.04em; margin: 14px 0 22px; }
 .intro h1 em { color: var(--green); font-style: normal; }
