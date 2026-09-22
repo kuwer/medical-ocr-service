@@ -47,6 +47,20 @@
             <h2>Your results will appear here</h2>
             <p>Upload a report to see a reviewable table of observations and FHIR output.</p>
           </div>
+          <div class="processing-state" id="processing-state" hidden aria-live="polite">
+            <div class="scan-orbit" aria-hidden="true"><span></span><i></i></div>
+            <p class="processing-kicker">LabLens is working</p>
+            <h2 id="processing-title">Preparing your report</h2>
+            <p class="processing-description" id="processing-description">We are getting the document ready for analysis.</p>
+            <div class="progress-track" aria-hidden="true"><span id="progress-bar"></span></div>
+            <div class="processing-steps" aria-label="Processing steps">
+              <span class="processing-step is-active" data-step="upload"><i></i>Upload</span>
+              <span class="processing-step" data-step="read"><i></i>Read report</span>
+              <span class="processing-step" data-step="structure"><i></i>Structure</span>
+              <span class="processing-step" data-step="review"><i></i>Review</span>
+            </div>
+            <p class="processing-footnote">Longer reports can take a little more time.</p>
+          </div>
           <div class="results-content" id="results-content" hidden>
             <div class="section-heading results-heading">
               <div><span class="step">02</span><h2>Review results</h2></div>

@@ -5,6 +5,7 @@ const fileTitle = document.querySelector('#file-title');
 const fileMeta = document.querySelector('#file-meta');
 const submitButton = document.querySelector('#submit-button');
 const emptyState = document.querySelector('#empty-state');
+const processingState = document.querySelector('#processing-state');
 const resultsContent = document.querySelector('#results-content');
 const resultsBody = document.querySelector('#results-body');
 const reviewBanner = document.querySelector('#review-banner');
@@ -13,6 +14,13 @@ const jsonDialog = document.querySelector('#json-dialog');
 const jsonOutput = document.querySelector('#json-output');
 const toast = document.querySelector('#toast');
 let latestBundle = null;
+let processingTimer = null;
+const processingPhases = [
+  { step: 'upload', title: 'Uploading securely', description: 'Sending your report for processing.', progress: 18, delay: 0 },
+  { step: 'read', title: 'Reading the report', description: 'Scanning pages and recognizing report content.', progress: 46, delay: 900 },
+  { step: 'structure', title: 'Structuring observations', description: 'Turning detected values into a FHIR-ready bundle.', progress: 72, delay: 3600 },
+  { step: 'review', title: 'Running quality checks', description: 'Checking units, ranges, and values that may need review.', progress: 88, delay: 7200 },
+];
 
 function showToast(message) {
   toast.textContent = message;
@@ -63,6 +71,30 @@ function renderResults(bundle) {
   emptyState.hidden = true;
   resultsContent.hidden = false;
 }
+function setProcessingPhase(phase) {
+  document.querySelector('#processing-title').textContent = phase.title;
+  document.querySelector('#processing-description').textContent = phase.description;
+  document.querySelector('#progress-bar').style.width = `${phase.progress}%`;
+  document.querySelectorAll('.processing-step').forEach((element) => {
+    const phaseIndex = processingPhases.findIndex((item) => item.step === element.dataset.step);
+    const currentIndex = processingPhases.findIndex((item) => item.step === phase.step);
+    element.classList.toggle('is-active', phaseIndex === currentIndex);
+    element.classList.toggle('is-complete', phaseIndex < currentIndex);
+  });
+}
+function startProcessing() {
+  emptyState.hidden = true;
+  resultsContent.hidden = true;
+  processingState.hidden = false;
+  processingPhases.forEach((phase) => window.setTimeout(() => {
+    if (!processingState.hidden) setProcessingPhase(phase);
+  }, phase.delay));
+}
+function stopProcessing() {
+  processingState.hidden = true;
+  if (processingTimer) window.clearTimeout(processingTimer);
+  processingTimer = null;
+}
 function escapeHtml(value) { return String(value).replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' }[char])); }
 
 form.addEventListener('submit', async (event) => {
@@ -71,14 +103,19 @@ form.addEventListener('submit', async (event) => {
   if (!file) return showToast('Choose a report before extracting.');
   submitButton.disabled = true;
   submitButton.querySelector('span').textContent = 'Reading report...';
+  startProcessing();
   try {
     const data = new FormData(); data.append('file', file);
     const response = await fetch('/web/extract', { method: 'POST', body: data });
     const payload = await response.json();
     if (!response.ok) throw new Error(payload.error || 'Extraction failed.');
+    stopProcessing();
     renderResults(payload);
-  } catch (error) { showToast(error.message || 'Could not process this report.'); }
-  finally { submitButton.disabled = false; submitButton.querySelector('span').textContent = 'Extract observations'; }
+  } catch (error) {
+    stopProcessing();
+    emptyState.hidden = false;
+    showToast(error.message || 'Could not process this report.');
+  } finally { submitButton.disabled = false; submitButton.querySelector('span').textContent = 'Extract observations'; }
 });
 
 document.querySelector('#json-button').addEventListener('click', () => { jsonOutput.textContent = JSON.stringify(latestBundle, null, 2); jsonDialog.showModal(); });
